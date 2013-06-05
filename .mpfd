@@ -1,0 +1,4 @@
+[files]
+plugin=mpfd_plugin_files
+root=c:/Users/JSH/Documents/
+mountpoint=/files
