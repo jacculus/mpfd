@@ -20,5 +20,5 @@ def loadConfig(configFile):
             log("WARNING: Section {}: no plugin specified, skipping".format(section))
             continue
         pluginModule=importlib.import_module(plugin)
-        pluginInstance=pluginModule.createInstance(config.items(section))
+        pluginInstance=pluginModule.createInstance(dict(x for x in config.items(section) if x[0]!='plugin'))
         mpfd.plugins.append(pluginInstance)
