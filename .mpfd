@@ -1,4 +1,9 @@
+[mplayer]
+plugin=mpfd_plugin_mplayer
+
 [files]
 plugin=mpfd_plugin_files
-root=c:/Users/JSH/Documents/
+root=c:/Users/Jack/Documents/
 mountpoint=/files
+
+
