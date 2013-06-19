@@ -1,9 +1,12 @@
 [mplayer]
 plugin=mpfd_plugin_mplayer
 
+[mutagen]
+plugin=mpfd_plugin_mutagen
+
 [files]
 plugin=mpfd_plugin_files
 root=c:/Users/Jack/Documents/
-mountpoint=/files
-
-
+mountpoint1=/files,directory
+mountpoint2=/albums,album
+mountpoint3=/artists,artist

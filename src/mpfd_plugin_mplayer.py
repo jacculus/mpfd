@@ -9,7 +9,7 @@ class MPFDMPlayerPlugin:
         pass
     
     def fileFilter(self, name):
-        if name.endswith(".jpg"):
+        if name.endswith(".mp3"):
             return name.rpartition(".")[0]
         return None
         
