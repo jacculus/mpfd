@@ -9,8 +9,23 @@ import mpfd_config
 import mpfd_socket
 import threading
 import time
+import atexit
 
+startedPlugins=[]
+
+def exitHandler():
+    for plugin in startedPlugins:
+        if hasattr(plugin, 'stop'):
+            plugin.stop()
+            
 mpfd_config.loadConfig(".mpfd")
+
+atexit.register(exitHandler)
+
+for plugin in mpfd.plugins:
+    if hasattr(plugin, 'start'):
+        plugin.start()
+        startedPlugins.append(plugin)
 
 serverSocketThread=mpfd_socket.ServerSocketThread()
 serverSocketThread.start()
@@ -20,3 +35,4 @@ print mpfd.plugins
 
 while threading.active_count()>0:
     time.sleep(0.1)
+    

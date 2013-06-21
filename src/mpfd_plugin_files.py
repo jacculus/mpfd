@@ -6,7 +6,41 @@ Created on 5 Jun 2013
 
 import mpfd
 import os
+import threading
 
+class MPFDFilesMetadataIndexerThread(threading.Thread):
+    def __init__(self, plugin):
+        self.plugin=plugin
+        self.daemon=True
+        self.stopping=False
+        
+    def stop(self):
+        self.stopping=True
+        
+    def run(self):
+        metadataPlugins=[x for x in mpfd.plugins if hasattr(x, 'getFileMetadata')]
+        dbPlugin=mpfd.getDBPlugin()
+        artistDict={}
+        albumDict={}
+        for root, dirs, files in os.walk(self.plugin.root):
+            for f in files:
+                for plugin in metadataPlugins:
+                    md=plugin.getFileMetadata(os.path.join(root,f))
+                    if md:
+                        if 'artist' in md:
+                            if not md['artist'] in artistDict:
+                                artistDict[md['artist']]=[]
+                            artistDict[md['artist']].append(md)
+                        if 'album' in md:
+                            if not md['album'] in albumDict:
+                                albumDict[md['album']]=[]
+                            albumDict[md['album']].append(md)
+                        break
+            if self.stopping:
+                return
+        dbPlugin.storeDB("filesMetadataArtists",artistDict)
+        dbPlugin.storeDB("filesMetadataAlbums",albumDict)
+    
 class MPFDFilesMountpoint:
     def __init__(self, mp, mpType):
         self.mp=mp
@@ -20,6 +54,18 @@ class MPFDFilesPlugin:
         self.root=root
         self.mountpoints=mountpoints
         self.filePlayerPlugins=None
+        #TODO: Load metadata on a thread
+        self.metadataIndexerThread=None
+        self.metadataReady=False
+    
+    def start(self):
+        if any(not x.isDirectory() for x in self.mountpoints):
+            self.metadataIndexerThread=MPFDFilesMetadataIndexerThread(self)
+            self.metadataIndexerThread.start()
+            
+    def stop(self):
+        if self.metadataIndexerThread:
+            self.metadataIndexerThread.stop()
     
     def getFilePlayers(self):
         self.filePlayerPlugins=[x for x in mpfd.plugins if hasattr(x, "fileFilter")]
@@ -40,6 +86,8 @@ class MPFDFilesPlugin:
         return result
     
     def listMetadataMountpoint(self, mountpoint, subdir):
+        dbPlugin=mpfd.getDBPlugin()
+        
         return [{ 'name': 'test', 'realname': 'test', 'type': 'file'}]
     
     def listDir(self, dirname):

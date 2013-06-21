@@ -1,3 +1,6 @@
+[database]
+plugin=mpfd_plugin_internaldb
+
 [mplayer]
 plugin=mpfd_plugin_mplayer
 
