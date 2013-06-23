@@ -4,12 +4,15 @@ plugin=mpfd_plugin_internaldb
 [mplayer]
 plugin=mpfd_plugin_mplayer
 
+[metadata_test]
+plugin=mpfd_plugin_metadata_test
+
 [mutagen]
 plugin=mpfd_plugin_mutagen
 
 [files]
 plugin=mpfd_plugin_files
-root=c:/Users/Jack/Documents/
+root=c:/Users/Jack/Documents/mpfd_root
 mountpoint1=/files,directory
 mountpoint2=/albums,album
-mountpoint3=/artists,artist
+mountpoint3=/artists,artist,album

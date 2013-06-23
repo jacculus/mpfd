@@ -10,6 +10,7 @@ import threading
 
 class MPFDFilesMetadataIndexerThread(threading.Thread):
     def __init__(self, plugin):
+        super(MPFDFilesMetadataIndexerThread, self).__init__()
         self.plugin=plugin
         self.daemon=True
         self.stopping=False
@@ -87,15 +88,29 @@ class MPFDFilesPlugin:
     
     def listMetadataMountpoint(self, mountpoint, subdir):
         dbPlugin=mpfd.getDBPlugin()
-        
-        return [{ 'name': 'test', 'realname': 'test', 'type': 'file'}]
+        toplevelDict=dbPlugin.getDB("filesMetadataArtists" if mountpoint.mpType[0]=='artist' else "filesMetadataAlbums")
+        if len(subdir)==0:
+            return [{'name': x, 'realname': x, 'type': 'dir'} for x in toplevelDict]
+        else:
+            subdirPath=subdir.split(mpfd.path_separator)
+            if len(subdirPath)>len(mountpoint.mpType):
+                return []
+            if not subdirPath[0] in toplevelDict:
+                return []
+            fileList=toplevelDict[subdirPath[0]]
+            for i in xrange(1,len(subdirPath)):
+                fileList=[x for x in fileList if x[mountpoint.mpType[i]]==subdirPath[i]]
+            if len(subdirPath)==len(mountpoint.mpType):
+                return [{'name':x['filepath'], 'realname':x['title'], 'type':'file'} for x in fileList]
+            lastCriterion=mountpoint.mpType[len(subdirPath)]
+            return [{'name':x, 'realname':x, 'type':'dir'} for x in set(x[lastCriterion] for x in fileList)]
     
     def listDir(self, dirname):
         if self.filePlayerPlugins==None:
             self.getFilePlayers()
         result=[]
         for mountpoint in self.mountpoints:
-            if dirname.startswith(mountpoint.mp):            
+            if dirname.lstrip(mpfd.path_separator).startswith(mountpoint.mp.lstrip(mpfd.path_separator)):            
                 subdir=dirname[len(mountpoint.mp):].strip(mpfd.path_separator)
                 if mountpoint.isDirectory():
                     result.extend(self.listDirectoryMountpoint(subdir))

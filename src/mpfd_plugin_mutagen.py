@@ -9,7 +9,7 @@ class MPFDMutagenPlugin:
         pass
     
     def getFileMetadata(self, fname):
-        return {}
+        return None
         
     
 def createInstance(config):
