@@ -23,7 +23,7 @@ class MPFDFilesMetadataIndexerThread(threading.Thread):
         dbPlugin=mpfd.getDBPlugin()
         artistDict={}
         albumDict={}
-        for root, dirs, files in os.walk(self.plugin.root):
+        for root, _, files in os.walk(self.plugin.root):
             for f in files:
                 for plugin in metadataPlugins:
                     md=plugin.getFileMetadata(os.path.join(root,f))
