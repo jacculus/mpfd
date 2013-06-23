@@ -6,7 +6,6 @@ Created on 5 Jun 2013
 
 import mpfd
 import mpfd_config
-import mpfd_socket
 import threading
 import time
 import atexit
@@ -26,9 +25,6 @@ for plugin in mpfd.plugins:
     if hasattr(plugin, 'start'):
         plugin.start()
         startedPlugins.append(plugin)
-
-serverSocketThread=mpfd_socket.ServerSocketThread()
-serverSocketThread.start()
 
 print "Config loaded"
 print mpfd.plugins

@@ -1,3 +1,8 @@
+[socket]
+plugin=mpfd_plugin_socket
+ip0=0.0.0.0
+port0=9850
+
 [database]
 plugin=mpfd_plugin_internaldb
 

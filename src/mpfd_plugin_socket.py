@@ -41,11 +41,11 @@ class ClientSocketThread(threading.Thread):
                     
         
 class ServerSocketThread(threading.Thread):
-    def __init__(self):
+    def __init__(self,ip,port):
         super(ServerSocketThread, self).__init__()
         self.daemon=True
         self.serverSocket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.serverSocket.bind(("0.0.0.0",9850))
+        self.serverSocket.bind((ip,port))
         self.serverSocket.listen(5)
         
     def run(self):
@@ -53,3 +53,14 @@ class ServerSocketThread(threading.Thread):
             (clientSocket, address) = self.serverSocket.accept()
             ct=ClientSocketThread(clientSocket, address)
             ct.start()
+
+class MPFDSocketPlugin:
+    def __init__(self,addresses):
+        self.socketThreads=[ServerSocketThread(x['ip'],x['port']) for x in addresses]
+        
+    def start(self):
+        for t in self.socketThreads:
+            t.start()
+            
+def createInstance(config):
+    return MPFDSocketPlugin([{'ip': config[x], 'port': int(config["port"+x[2:]])} for x in config if x.startswith("ip")])            
