@@ -7,6 +7,7 @@ Created on 5 Jun 2013
 import mpfd
 import os
 import threading
+import hashlib
 
 class MPFDFilesMetadataIndexerThread(threading.Thread):
     def __init__(self, plugin):
@@ -63,13 +64,11 @@ class MPFDFilesPlugin:
         if any(not x.isDirectory() for x in self.mountpoints):
             self.metadataIndexerThread=MPFDFilesMetadataIndexerThread(self)
             self.metadataIndexerThread.start()
+        self.filePlayerPlugins=[x for x in mpfd.plugins if hasattr(x, "fileFilter")]
             
     def stop(self):
         if self.metadataIndexerThread:
             self.metadataIndexerThread.stop()
-    
-    def getFilePlayers(self):
-        self.filePlayerPlugins=[x for x in mpfd.plugins if hasattr(x, "fileFilter")]
     
     def listDirectoryMountpoint(self, subdir):
         path=os.path.join(self.root,subdir)
@@ -101,13 +100,31 @@ class MPFDFilesPlugin:
             for i in xrange(1,len(subdirPath)):
                 fileList=[x for x in fileList if x[mountpoint.mpType[i]]==subdirPath[i]]
             if len(subdirPath)==len(mountpoint.mpType):
-                return [{'name':x['filepath'], 'realname':x['title'], 'type':'file'} for x in fileList]
+                return [{'name':hashlib.md5(x['filepath']).hexdigest(), 'realname':x['title'], 'type':'file'} for x in fileList]
             lastCriterion=mountpoint.mpType[len(subdirPath)]
             return [{'name':x, 'realname':x, 'type':'dir'} for x in set(x[lastCriterion] for x in fileList)]
+
+    def playDirectoryFile(self,subfile):
+        fpath=os.path.join(*([self.root]+subfile.split(mpfd.path_separator)))
+        return mpfd.playLocalFile(fpath)
+                
+    def playMetadataFile(self,mountpoint,subfile):
+        dbPlugin=mpfd.getDBPlugin()
+        toplevelDict=dbPlugin.getDB("filesMetadataArtists" if mountpoint.mpType[0]=='artist' else "filesMetadataAlbums")
+        if not mpfd.path_separator in subfile:
+            return False
+        subfilePath=subfile.split(mpfd.path_separator)
+        if len(subfilePath)!=len(mountpoint.mpType)+1:
+            return False
+        if not subfilePath[0] in toplevelDict:
+            return []
+        fileList=toplevelDict[subfilePath[0]]
+        for i in xrange(1,len(mountpoint.mpType)):
+            fileList=[x for x in fileList if x[mountpoint.mpType[i]]==subfilePath[i]]
+        fpath=next((x['filepath'] for x in fileList if hashlib.md5(x['filepath']).hexdigest()==subfilePath[-1]),None)
+        return mpfd.playLocalFile(fpath)
     
     def listDir(self, dirname):
-        if self.filePlayerPlugins==None:
-            self.getFilePlayers()
         result=[]
         for mountpoint in self.mountpoints:
             if dirname.lstrip(mpfd.path_separator).startswith(mountpoint.mp.lstrip(mpfd.path_separator)):            
@@ -121,6 +138,18 @@ class MPFDFilesPlugin:
                 if dirname.rstrip(mpfd.path_separator)==mpPartitioned[0]:
                     result.append({'name':mpPartitioned[2], 'type': 'dir'})
         return result
+    
+    def playFile(self, fname):
+        for mountpoint in self.mountpoints:
+            if fname.lstrip(mpfd.path_separator).startswith(mountpoint.mp.lstrip(mpfd.path_separator)):            
+                subfile=fname[len(mountpoint.mp):].strip(mpfd.path_separator)
+                if mountpoint.isDirectory():
+                    if self.playDirectoryFile(subfile):
+                        return True
+                else:
+                    if self.playMetadataFile(mountpoint,subfile):
+                        return True
+        return False
 
 mpTypes=[ 'directory', 'album', 'artist' ]
 def extractMountpoint(mpStr):

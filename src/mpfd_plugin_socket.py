@@ -34,6 +34,14 @@ class ClientSocketThread(threading.Thread):
                                     response['ok']=True
                                 else:
                                     response['error']="No dir parameter supplied"
+                            if content['command']=='play':
+                                if 'file' in content:
+                                    if mpfd.playFile(content['file']):
+                                        response['ok']=True
+                                    else:
+                                        response['error']="Unable to play file"
+                                else:
+                                    response['error']="No file parameter supplied"
                         self.clientSocket.send(json.dumps(response)+"\n")
                     except ValueError as ex:
                         print ex
